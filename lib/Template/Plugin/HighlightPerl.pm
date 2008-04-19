@@ -3,7 +3,7 @@
 # Template::Plugin::HighlightPerl
 #
 # DESCRIPTION
-#   Wrapper around Syntax::Highlight::Perl module
+#   Template Toolkit Filter For Syntax Highlighting
 #
 # AUTHOR
 #   Stephen Sykes <stephen@stephensykes.us>
@@ -24,7 +24,7 @@ use Template::Plugin::Filter;
 use base qw( Template::Plugin::Filter );
 use strict;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub init {
     my $self = shift;
@@ -35,6 +35,23 @@ sub init {
 
 sub filter {
     my ($self, $text) = @_;
+    
+
+    if ($text =~ '\[perl]') {
+        $text = perl($text);
+    }
+    if ($text =~ '\[code]') {
+        $text = code($text);
+    }
+    
+    return $text;
+    
+}
+
+sub perl {
+    my $text = shift;
+    
+    $text =~ s/<br>//g;
     
     my $color_table = {
         'Variable_Scalar'   => 'color:#FFFFFF;',
@@ -76,66 +93,77 @@ sub filter {
                                         '</span>' ] );
     }
 
-    if ($text =~ '\[perl]') {
-        my @code = split(/\[perl]/, $text);
-        for my $rec (@code) {
-            my $format_code;
-            if ($rec =~ '\[/perl]') {
-                my @code_rec = split(/\[\/perl]/, $rec);
-                my $count = 0;
-                for my $ret (@code_rec) {
-                    $count++;
-                    if ($count % 2 == 1) {
-                        my $formatter_code  = $formatter->format_string($ret);
-                        $format_code  = '<div class="highlight_perl_head">Perl Code:</div>';
-                        $format_code .= '<div class="highlight_perl_body"><pre>' .$formatter_code. '</pre></div>';
-                    } else {
-                        $ret =~ s/\n/<br>/g;
-                        $format_code = $ret;
+    my @code = split(/\[perl]/, $text);
+    for my $rec (@code) {
+        my $format_code;
+        
+        if ($rec =~ '\[/perl]') {
+            my @code_rec = split(/\[\/perl]/, $rec);
+            my $count = 0;
+            for my $ret (@code_rec) {
+                $count++;
+                if ($count % 2 == 1) {
+                    my $formatter_code  = $formatter->format_string($ret);
+                    my $line_count = 0;
+                    my @line_ar = split(/\n/, $formatter_code);
+                    for my $line ( @line_ar ) {
+                        $line_count++;
+                        if ($line_count == 1) {
+                            $formatter_code = $line;
+                        } else {
+                            $formatter_code .= $line;
+                        }
                     }
-                    $text .= $format_code;
-               }
-            } else {
-                $rec =~ s/\n/<br>/g;
-                $text = $rec;
-            }
+                    $format_code  = '<div class="highlight_perl_head">Perl Code:</div>';
+                    $format_code .= '<div class="highlight_perl_body"><pre>' .$formatter_code. '</pre></div>';
+                } else {
+                    $ret =~ s/\n/<br>/g;
+                    $format_code = $ret;
+                }
+                $text .= $format_code;
+           }
+            
+        } else {
+            $rec =~ s/\n/<br>/g;
+            $text = $rec;
         }
-        return $text;
-    } elsif ($text =~ '\[code]') {
-        my @code = split(/\[code]/, $text);
-        for my $rec (@code) {
-            my $format_code;
-            if ($rec =~ '\[/code]') {
-                my @code_rec = split(/\[\/code]/, $rec);
-                my $count = 0;
-                for my $ret (@code_rec) {
-                    $count++;
-                    if ($count % 2 == 1) {
-                        $ret =~ s/</&lt;/g;
-                        $ret =~ s/>/&gt;/g;
-                        $format_code  = '<div class="highlight_code_head">Code:</div>';
-                        $format_code .= '<div class="highlight_code_body"><pre>' .$ret. '</pre></div>';
-                    } else {
-                        $ret =~ s/\n/<br>/g;
-                        $format_code = $ret;
-                    }
-                    $text .= $format_code;
-               }
-            } else {
-                $rec =~ s/\n/<br>/g;
-                $text = $rec;
-            }
-        }
-        return $text;
-    } else {
-        $text =~ s/\n/<br>/g;
-        return $text;
     }
-
+    return $text;
+    
 }
 
-
-
+sub code {
+    my $text = shift;
+    
+    $text =~ s/<br>/\n/g;
+    
+    my @code = split(/\[code]/, $text);
+    for my $rec (@code) {
+        my $format_code;
+        if ($rec =~ '\[/code]') {
+            my @code_rec = split(/\[\/code]/, $rec);
+            my $count = 0;
+            for my $ret (@code_rec) {
+                $count++;
+                if ($count % 2 == 1) {
+                    $ret =~ s/</&lt;/g;
+                    $ret =~ s/>/&gt;/g;
+                    $format_code  = '<div class="highlight_code_head">Code:</div>';
+                    $format_code .= '<div class="highlight_code_body"><pre>' .$ret. '</pre></div>';
+                } else {
+                    $ret =~ s/\n/<br>/g;
+                    $format_code = $ret;
+                }
+                $text .= $format_code;
+           }
+        } else {
+            $rec =~ s/\n/<br>/g;
+            $text = $rec;
+        }
+    }
+    return $text;
+    
+}
 
 1;
 
@@ -144,21 +172,21 @@ __END__
 =head1 NAME
 
 Template::Plugin::HighlightPerl - Template Toolkit plugin which 
-implements wrapper around Syntax::Highlight::Perl::Code module.
+implements wrapper around L<Syntax::Highlight::Perl> module.
 
 =head1 SYNOPSIS
 
-[% USE HighlightPerl -%]
+    [% USE HighlightPerl -%]
 
-[% FILTER highligh_perl -%]
-    [perl]Code block here[/perl]
-    [code]None perl code here[/code]
-[% END -%]
+    [% FILTER highligh_perl -%]
+        [perl]Code block here[/perl]
+        [code]None perl code here[/code]
+    [% END -%]
 
 =head1 DESCRIPTION
 
 Template::Plugin::HighlightPerl - Template Toolkit plugin which 
-implements wrapper around Syntax::Highlight::Perl module and provides filter
+implements wrapper around L<Syntax::Highlight::Perl> module and provides filter
 for converting perl code to syntax highlighted HTML. Also adds support for
 non-perl code, see below.
 
@@ -177,11 +205,11 @@ Close: [/code]
 
 Within your template file, use the following:
 
-[% USE HighlightPerl -%]
+    [% USE HighlightPerl -%]
 
-[% FILTER highligh_perl -%]
-    [% article.body %]
-[% END -%]
+    [% FILTER highligh_perl -%]
+        [% article.body %]
+    [% END -%]
 
 Where [% article.body %] is data passed to the template file from database query.
 
@@ -193,49 +221,49 @@ is no need to add white space pre to css file.
 This template filter also produces CSS div classes for user customization. 
 
 Generated CSS classes for perl code:
-<div class="highlight_perl_head">Perl Code:</div>
-<div class="highlight_perl_body"><pre>Perl Code</pre></div>
+    <div class="highlight_perl_head">Perl Code:</div>
+    <div class="highlight_perl_body"><pre>Perl Code</pre></div>
 
 Generated CSS for non-perl code:
-<div class="highlight_code_head">Code:<div>
-<div class="highlight_code_body"><pre>Non-Perl Code</pre></div>
+    <div class="highlight_code_head">Code:<div>
+    <div class="highlight_code_body"><pre>Non-Perl Code</pre></div>
 
 For example, you can use the following in your css file:
 
-.highlight_perl_head {
-    margin-left: 10px;
-}
-.highlight_perl_body {
-    margin-left: 10px;
-    margin-top:5px;
-    margin-bottom: 5px;
-    white-space: pre;
-    background: #0a0a0a;
-    color: #cccccc;
-    font-family: monospace;
-    font-size: 93%;
-    border: 1px solid #555555;
-    overflow: auto;
-    padding: 10px;
-    width: 640px;
-}
-.highlight_code_head {
-    margin-left: 10px;
-}
-.highlight_code_body {
-    margin-left: 10px;
-    margin-top:5px;
-    margin-bottom: 5px;
-    white-space: pre;
-    background: #0a0a0a;
-    color: #cccccc;
-    font-family: monospace;
-    font-size: 93%;
-    border: 1px solid #555555;
-    overflow: auto;
-    padding: 10px;
-    width: 640px;
-}
+    .highlight_perl_head {
+        margin-left: 10px;
+    }
+    .highlight_perl_body {
+        margin-left: 10px;
+        margin-top:5px;
+        margin-bottom: 5px;
+        white-space: pre;
+        background: #0a0a0a;
+        color: #cccccc;
+        font-family: monospace;
+        font-size: 93%;
+        border: 1px solid #555555;
+        overflow: auto;
+        padding: 10px;
+        width: 640px;
+    }
+    .highlight_code_head {
+        margin-left: 10px;
+    }
+    .highlight_code_body {
+        margin-left: 10px;
+        margin-top:5px;
+        margin-bottom: 5px;
+        white-space: pre;
+        background: #0a0a0a;
+        color: #cccccc;
+        font-family: monospace;
+        font-size: 93%;
+        border: 1px solid #555555;
+        overflow: auto;
+        padding: 10px;
+        width: 640px;
+    }
 
 This will produce nice div areas with head description and black background and auto-scoll bars for code overflow.
 
