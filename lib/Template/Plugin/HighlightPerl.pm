@@ -24,7 +24,7 @@ use Template::Plugin::Filter;
 use base qw( Template::Plugin::Filter );
 use strict;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub init {
     my $self = shift;
@@ -36,14 +36,16 @@ sub init {
 sub filter {
     my ($self, $text) = @_;
     
-
-    if ($text =~ '\[perl]') {
-        $text = perl($text);
+    if (($text !~ '\[perl]') && ($text !~ '\[code]')) {
+        $text = break($text);
+    } else {
+        if ($text =~ '\[perl]') {
+            $text = perl($text);
+        }
+        if ($text =~ '\[code]') {
+            $text = code($text);
+        }
     }
-    if ($text =~ '\[code]') {
-        $text = code($text);
-    }
-    
     return $text;
     
 }
@@ -163,6 +165,12 @@ sub code {
     }
     return $text;
     
+}
+
+sub break {
+    my $text = shift;
+    $text =~ s/\n/<br>/g;
+    return $text;
 }
 
 1;
