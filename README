@@ -1,4 +1,4 @@
-Template-Plugin-HighlightPerl version 0.02
+Template-Plugin-HighlightPerl version 0.04
 ==========================================
 
 INSTALLATION
@@ -32,9 +32,13 @@ Close: [/perl]
 
 Your Perl code goes between opening and closing tags. ;)
 
-If you need to format non-perl code, use the following tags.:
+If you need to format non-perl code, use the following tags:
 Open:  [code]
 Close: [/code]
+
+If you are not using code tags and do not want line breaks:
+Open: [nobr]
+Close [/nobr]
 
 Within your template file, use the following:
 
@@ -46,10 +50,10 @@ Within your template file, use the following:
 
 Where [% article.body %] is data passed to the template file from database query.
 
-Please note that line breaks are generated, so you will not need to use other TT2
-filters, such as html_line_break or html_para. Also note that pre tags are
-automaticlly producted to maintain proper formatting of your Perl code, so there
-is no need to add white space pre to css file.
+Please note that, unless you use [nobr] tags, line breaks are generated. So you
+will not need to use other TT2 filters, such as html_line_break or html_para.
+Also note that pre tags are automaticlly producted to maintain proper formatting
+of your Perl code, so there is no need to add white space pre to css file.
 
 This template filter also produces CSS div classes for user customization. 
 

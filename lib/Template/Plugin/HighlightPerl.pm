@@ -24,7 +24,7 @@ use Template::Plugin::Filter;
 use base qw( Template::Plugin::Filter );
 use strict;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub init {
     my $self = shift;
@@ -36,7 +36,7 @@ sub init {
 sub filter {
     my ($self, $text) = @_;
     
-    if (($text !~ '\[perl]') && ($text !~ '\[code]')) {
+    if (($text !~ '\[perl]') && ($text !~ '\[code]') && ($text !~ '\[nobr]')) {
         $text = break($text);
     } else {
         if ($text =~ '\[perl]') {
@@ -44,6 +44,9 @@ sub filter {
         }
         if ($text =~ '\[code]') {
             $text = code($text);
+        }
+        if ($text =~ '\[nobr]') {
+            $text = nobreak($text);
         }
     }
     return $text;
@@ -167,6 +170,13 @@ sub code {
     
 }
 
+sub nobreak {
+    my $text = shift;
+    $text =~ s/\[nobr\]//g;
+    $text =~ s/\[\/nobr\]//g;
+    return $text;
+}
+
 sub break {
     my $text = shift;
     $text =~ s/\n/<br>/g;
@@ -189,6 +199,7 @@ implements wrapper around L<Syntax::Highlight::Perl> module.
     [% FILTER highligh_perl -%]
         [perl]Code block here[/perl]
         [code]None perl code here[/code]
+        [nobr]No code and no line breaks[/nobr]
     [% END -%]
 
 =head1 DESCRIPTION
@@ -207,9 +218,13 @@ Close: [/perl]
 
 Your Perl code goes between opening and closing tags. ;)
 
-If you need to format non-perl code, use the following tags.:
+If you need to format non-perl code, use the following tags:
 Open:  [code]
 Close: [/code]
+
+If you are not using code tags and do not want line breaks:
+Open: [nobr]
+Close [/nobr]
 
 Within your template file, use the following:
 
@@ -221,10 +236,10 @@ Within your template file, use the following:
 
 Where [% article.body %] is data passed to the template file from database query.
 
-Please note that line breaks are generated, so you will not need to use other TT2
-filters, such as html_line_break or html_para. Also note that pre tags are
-automaticlly producted to maintain proper formatting of your Perl code, so there
-is no need to add white space pre to css file.
+Please note that, unless you use [nobr] tags, line breaks are generated. So you
+will not need to use other TT2 filters, such as html_line_break or html_para.
+Also note that pre tags are automaticlly producted to maintain proper formatting
+of your Perl code, so there is no need to add white space pre to css file.
 
 This template filter also produces CSS div classes for user customization. 
 
